@@ -11,7 +11,8 @@ const {
     deleteCompany,
     getCompanyById,
     downloadAllResumesZip,
-    downloadCompanyResumesZip
+    downloadCompanyResumesZip,
+    makeStudentCoordinator
 } = require('../controller/coordinators');
 
 // combine middleware imports and remove unused ones
@@ -20,7 +21,7 @@ const { authenticate, requireCoordinator } = require("../middleware/auth");
 // Apply authentication and coordinator check to all coordinator routes
 router.use(authenticate, requireCoordinator);
 
-// Coordinator endpoints (now protected)
+// Coordinator endpoints (now protected)    
 // add upload middleware for file upload route
 router.post('/register-students-file', upload.single('file'), registerStudentsFromFile);
 router.post('/company', createCompany);
@@ -30,5 +31,5 @@ router.put('/company/:id', updateCompany);
 router.delete('/company/:id', deleteCompany);
 router.get('/resumes/download-all', downloadAllResumesZip);
 router.get('/resumes/download/:id', downloadCompanyResumesZip);
-
+router.put('/promote', makeStudentCoordinator);
 module.exports = router;

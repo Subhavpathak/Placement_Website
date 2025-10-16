@@ -45,7 +45,7 @@ async function start() {
   app.use('/api/coordinators', coordinatorRoutes);
   app.use('/api/students', studentRoutes);
   app.use('/api/auth', authRoutes);
-
+  
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });

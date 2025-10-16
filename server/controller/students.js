@@ -257,7 +257,7 @@ const applyToCompany = async (req, res) => {
     });
   }
 
-  const { companyId } = req.body;
+  const { companyId } = req.params  ;
   const studentId = req.user?.id;
 
   if (!companyId) {

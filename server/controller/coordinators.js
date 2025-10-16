@@ -6,6 +6,7 @@ const xlsx = require('xlsx');
 const Application = require('../models/application');
 const cloudinary = require('../utils/cloudinary');
 const { getCloudinaryId } = require('../utils/helperPublicId');
+const bcrypt = require('bcryptjs');
 
 // Register students from file (CSV or Excel)
 const registerStudentsFromFile = async (req, res) => {
@@ -49,10 +50,14 @@ const registerStudentsFromFile = async (req, res) => {
             }
 
             // Create student object
+            // Hash the password before saving
+            const plainPassword = `${studentData.rollNo}@007`;
+            const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
             const student = {
                 name: studentData.name,
                 email: studentData.email,
-                password: `${studentData.rollNo}@007`,
+                password: hashedPassword,
                 role: studentData.role,
                 details: {
                     rollNo: studentData.rollNo || '',
@@ -522,6 +527,49 @@ const parseExcelFile = (filePath) => {
     });
 };
 
+// Helper to escape user input used in RegExp
+const escapeRegex = (str = '') => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const normalize = (s = '') => s.toString().trim().toLowerCase().replace(/\s+/g, ' ');
+
+// Promote a student to coordinator by email only
+const makeStudentCoordinator = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Case-insensitive email match
+    const emailRegex = new RegExp(`^${escapeRegex(email.toString().trim())}$`, 'i');
+    const student = await Student.findOne({ email: emailRegex });
+
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found with provided email' });
+    }
+
+    if (student.role === 'coordinator') {
+      return res.status(400).json({ error: 'User is already a coordinator' });
+    }
+
+    student.role = 'coordinator';
+    await student.save();
+
+    return res.status(200).json({
+      message: 'Student promoted to coordinator successfully',
+      student: {
+        id: student._id,
+        name: student.name,
+        email: student.email,
+        role: student.role
+      }
+    });
+  } catch (error) {
+    console.error('Error promoting student:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
     registerStudentsFromFile,
     createCompany,
@@ -530,5 +578,6 @@ module.exports = {
     deleteCompany,
     getCompanyById,
     downloadAllResumesZip,
-    downloadCompanyResumesZip
+    downloadCompanyResumesZip,
+    makeStudentCoordinator
 };

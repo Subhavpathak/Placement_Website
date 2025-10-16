@@ -29,7 +29,7 @@ const loginStudent = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    const student = await Student.findOne({ email });
+    const student = await Student.findOne({ email: email.toLowerCase() });
     if (!student) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
